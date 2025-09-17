@@ -1,0 +1,19 @@
+{
+  "name": "picorosso_bme680",
+  "version": "0.0.1",
+  "description": "BME680 module for picorosso",
+  "keywords": "ros, robot, picorosso, bme680",
+  "authors": [
+    {
+      "name": "Jorge Visca",
+      "email": "jvisca@fing.edu.uy",
+      "url": "https://www.fing.edu.uy/~jvisca/",
+      "maintainer": true
+    }
+  ],
+  "dependencies": {
+    "k0i05/esp_bme680": "^1.2.7"
+  },
+  "frameworks": "espidf",
+  "platforms": "espressif32"
+}
