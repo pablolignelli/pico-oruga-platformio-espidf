@@ -42,9 +42,7 @@ static double state_efforts[4];
 
 static const char *joint_names[] = {"fl_wheel_joint", "fr_wheel_joint", "rl_wheel_joint", "rr_wheel_joint"};
 static ros_JointState msg_joint_state = {
-    .header = {
-        .frame_id = (char *)"base_link",
-    },
+    .header = {.frame_id = (char *)"base_link"},
     .name = {.data = (char **)joint_names, .n_elements = 4},
     .position = {.data = state_position, .n_elements = 4},
     .velocity = {.data = state_velocity, .n_elements = 4},
@@ -192,9 +190,9 @@ static void report_task(void *)
     msg_joint_state.position.data[2] = TICKS_TO_RAD * enc_count_rr_lft;
     msg_joint_state.position.data[3] = TICKS_TO_RAD * enc_count_rr_rgt;
 
-    //z_clock_t now = z_clock_now();
-    //msg_joint_state.header.stamp.sec = (int32_t)now.tv_sec;
-    //msg_joint_state.header.stamp.nanosec = (uint32_t)now.tv_nsec;
+    // z_clock_t now = z_clock_now();
+    // msg_joint_state.header.stamp.sec = (int32_t)now.tv_sec;
+    // msg_joint_state.header.stamp.nanosec = (uint32_t)now.tv_nsec;
     PicoRosso::set_timestamp(msg_joint_state.header.stamp);
 
     pr_publish(publisher_joint, msg_joint_state);
@@ -256,7 +254,6 @@ bool MobilitySkid::setup()
 {
   ESP_LOGD(TAG, "Setting up...");
 
-  
   if (!odom.setup("odom", "tf", "odom", "base_footprint"))
   {
     ESP_LOGE(TAG, "failure initializing odom_helper.");
@@ -312,7 +309,7 @@ bool MobilitySkid::setup()
       CONTROL_TASK_PRIORITY,
       NULL);
 
-  //PicoRosso::timer.every(PERIOD_REPORT_MS, &report_cb);
+  // PicoRosso::timer.every(PERIOD_REPORT_MS, &report_cb);
   xTaskCreate(
       report_task,
       REPORT_TASK_NAME,

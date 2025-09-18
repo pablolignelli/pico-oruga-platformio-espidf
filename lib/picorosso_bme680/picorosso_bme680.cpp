@@ -37,13 +37,7 @@ static picoros_publisher_t publisher_temperature = {
         },
 };
 static ros_Temperature msg_temperature = {
-    .header = {
-        .stamp = {
-            .sec = 0,
-            .nanosec = 0,
-        },
-        .frame_id = (char *)"bme680",
-    },
+    .header = {.frame_id = (char *)"bme680"},
     .temperature = -273.15,
     .variance = 0.0,
 };
@@ -57,13 +51,7 @@ static picoros_publisher_t publisher_humidity = {
         },
 };
 static ros_RelativeHumidity msg_humidity = {
-    .header = {
-        .stamp = {
-            .sec = 0,
-            .nanosec = 0,
-        },
-        .frame_id = (char *)"bme680",
-    },
+    .header = {.frame_id = (char *)"bme680"},
     .relative_humidity = 0.0,
     .variance = 0.0,
 };
@@ -77,13 +65,7 @@ static picoros_publisher_t publisher_pressure = {
         },
 };
 static ros_FluidPressure msg_pressure = {
-    .header = {
-        .stamp = {
-            .sec = 0,
-            .nanosec = 0,
-        },
-        .frame_id = (char *)"bme680",
-    },
+    .header = {.frame_id = (char *)"bme680"},
     .fluid_pressure = 0.0,
     .variance = 0.0,
 };

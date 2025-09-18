@@ -32,13 +32,7 @@ static picoros_publisher_t publisher_raw = {
         },
 };
 static ros_Imu msg_raw = {
-    .header = {
-        .stamp = {
-            .sec = 0,
-            .nanosec = 0,
-        },
-        .frame_id = (char *)"imu_link",
-    },
+    .header = {.frame_id = (char *)"imu_link"},
     .orientation_covariance = {-1, -1, -1, -1, -1, -1, -1, -1, -1},
     .angular_velocity_covariance = {0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5},
     .linear_acceleration_covariance = {0.05, 0, 0, 0, 0.5, 0, 0, 0, 0.5},
@@ -52,13 +46,7 @@ static picoros_publisher_t publisher_temperature = {
     },
 };
 static ros_Temperature msg_temperature = {
-    .header = {
-        .stamp = {
-            .sec = 0,
-            .nanosec = 0,
-        },
-        .frame_id = (char *)"imu_link",
-    },
+    .header = {.frame_id = (char *)"imu_link"},
     .temperature = -273.15,
     .variance = 0.0,
 };
