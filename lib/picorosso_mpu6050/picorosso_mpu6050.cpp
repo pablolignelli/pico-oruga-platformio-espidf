@@ -62,6 +62,7 @@ static void i2c0_mpu6050_task(void *pvParameters)
         float temperature;
         mpu6050_gyro_data_axes_t gyro_data;
         mpu6050_accel_data_axes_t accel_data;
+        
         z_clock_t now;
         clock_gettime(CLOCK_REALTIME, &now);
         esp_err_t result = mpu6050_get_motion(dev_hdl, &gyro_data, &accel_data, &temperature);

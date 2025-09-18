@@ -101,7 +101,8 @@ static void odom_helper_task(void *pvParameters)
 
   for (;;)
   {
-    z_clock_t now = z_clock_now();
+    z_clock_t now;
+    clock_gettime(CLOCK_REALTIME, &now);
 
     // robot's position in x,y,phi
     msg_odom.pose.pose.position.x = OdomHelper::pos.x;
@@ -122,8 +123,6 @@ static void odom_helper_task(void *pvParameters)
     msg_odom.twist.twist.linear.y = OdomHelper::vel.y;
     msg_odom.twist.twist.angular.z = OdomHelper::vel.phi;
 
-    //msg_odom.header.stamp.sec = (int32_t)now.tv_sec;
-    //msg_odom.header.stamp.nanosec = (uint32_t)now.tv_nsec;
     PicoRosso::set_timestamp(msg_odom.header.stamp, now);
 
     pr_publish(publisher_odom, msg_odom);
@@ -133,8 +132,6 @@ static void odom_helper_task(void *pvParameters)
     msg_transform.transform.translation.z = msg_odom.pose.pose.position.z;
     msg_transform.transform.rotation = msg_odom.pose.pose.orientation;
 
-    //msg_transform.header.stamp.sec = (int32_t)now.tv_sec;
-    //msg_transform.header.stamp.nanosec = (uint32_t)now.tv_nsec;
     PicoRosso::set_timestamp(msg_odom.header.stamp, now);
 
     // RCNOCHECK(rcl_publish(&pdescriptor_tf.publisher, &msg_tf, NULL));
@@ -164,7 +161,6 @@ bool OdomHelper::setup(const char *topic_odom,
   msg_transform.child_frame_id = (char *)child_frame_id;
   picoros_publisher_declare(&PicoRosso::node, &publisher_tf);
 
-  //PicoRosso::timer.every(ODOM_INTERVAL_MS, &report_cb);
   xTaskCreate(
       odom_helper_task,
       ODOM_TASK_NAME,
