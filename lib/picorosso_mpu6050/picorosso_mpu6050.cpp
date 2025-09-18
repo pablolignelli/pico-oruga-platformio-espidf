@@ -59,10 +59,12 @@ static void i2c0_mpu6050_task(void *pvParameters)
 
     for (;;)
     {
-    }
 
-    // pause the task per defined wait period
-    vTaskDelayUntil(&last_wake_time, MPU6050_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+
+
+        // pause the task per defined wait period
+        vTaskDelayUntil(&last_wake_time, MPU6050_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+    }
 }
 
 bool ImuMPU6050::setup(i2c_master_bus_handle_t &i2c0_bus_hdl,
