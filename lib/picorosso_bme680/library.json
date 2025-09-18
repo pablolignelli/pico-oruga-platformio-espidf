@@ -1,7 +1,7 @@
 {
   "name": "picorosso_bme680",
   "version": "0.0.1",
-  "description": "BME680 module for picorosso",
+  "description": "BME680 environmental sensor module for picorosso",
   "keywords": "ros, robot, picorosso, bme680",
   "authors": [
     {

@@ -24,7 +24,7 @@
     .heater_duration = 300,                                         \
     .heater_profile_size = 1}
 
-bme680_handle_t dev_hdl;
+static bme680_handle_t dev_hdl;
 
 static const char *TAG = "bme680";
 
@@ -102,7 +102,7 @@ static ros_Float32 msg_gasr = {
 
 EnvBME680::EnvBME680() {}
 
-void i2c0_bme680_task(void *pvParameters)
+static void i2c0_bme680_task(void *pvParameters)
 {
   TickType_t last_wake_time = xTaskGetTickCount();
 
