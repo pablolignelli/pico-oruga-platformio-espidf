@@ -23,14 +23,20 @@
 i2c_master_bus_config_t i2c0_bus_cfg = I2C0_MASTER_CONFIG_DEFAULT;
 i2c_master_bus_handle_t i2c0_bus_hdl;
 
-#define WIFI_SSID ""
+//#define WIFI_SSID ""
 #define WIFI_PASSWORD ""
 
-#define ZENOH_ROUTER_ADDRESS "tcp/192.168.10.235:7447"
+//#define ZENOH_ROUTER_ADDRESS "tcp/192.168.10.235:7447"
+//#define ZENOH_ROUTER_ADDRESS "tcp/192.168.101.2:7447"
+//#define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=115200"
+#define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=921600"
+
 #define ZENOH_NODE_NAME "oruga"
 
+#if defined(WIFI_SSID)
 #include "wifi_connection.h"
 WifiConnection wifi;
+#endif
 
 #include "picorosso.h"
 PicoRosso picorosso;
@@ -65,12 +71,14 @@ void app_main()
     ESP_LOGI("main", "Booting...");
 
     // Start NVS and Wifi
+    #if defined(WIFI_SSID)
     InitNVS();
     wifi.connect(WIFI_SSID, WIFI_PASSWORD);
     while (wifi.connected == false)
     {
         vTaskDelay(20 / portTICK_PERIOD_MS);
     }
+    #endif
 
     // Start I2C
     /* instantiate i2c master bus 0 */
@@ -91,8 +99,7 @@ void app_main()
 
     while (true)
     {
-        printf("1min!\n");
-        // Wait for one second
+        picorosso.rosout.out("Alive!", __FILE__, __func__, __LINE__, ROSLOG_INFO);
         vTaskDelay(60000 / portTICK_PERIOD_MS);
     }
 }
