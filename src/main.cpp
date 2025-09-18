@@ -19,6 +19,7 @@
     .flags = {.enable_internal_pullup = true}, \
 }
 
+///////////////////////////////////////////////////////////////////////////
 // initialize master i2c 0 bus configuration
 i2c_master_bus_config_t i2c0_bus_cfg = I2C0_MASTER_CONFIG_DEFAULT;
 i2c_master_bus_handle_t i2c0_bus_hdl;
@@ -32,6 +33,7 @@ i2c_master_bus_handle_t i2c0_bus_hdl;
 #define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=921600"
 
 #define ZENOH_NODE_NAME "oruga"
+///////////////////////////////////////////////////////////////////////////
 
 #if defined(WIFI_SSID)
 #include "wifi_connection.h"
@@ -43,6 +45,9 @@ PicoRosso picorosso;
 
 #include "picorosso_bme680.h"
 EnvBME680 env;
+
+#include "picorosso_mpu6050.h"
+ImuMPU6050 imu;
 
 #include "mobility_skid.h"
 MobilitySkid mobility;
@@ -90,6 +95,7 @@ void app_main()
     // Modules initalization ////////////////////////////////
     ticker.setup("tick");
     env.setup(i2c0_bus_hdl);
+    imu.setup(i2c0_bus_hdl);
     mobility.setup();
 
     // Publisher task

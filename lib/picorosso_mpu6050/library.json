@@ -1,0 +1,19 @@
+{
+  "name": "picorosso_mpu6050",
+  "version": "0.0.1",
+  "description": "MPU6050 IMU module for picorosso",
+  "keywords": "ros, robot, picorosso, mpu6050",
+  "authors": [
+    {
+      "name": "Jorge Visca",
+      "email": "jvisca@fing.edu.uy",
+      "url": "https://www.fing.edu.uy/~jvisca/",
+      "maintainer": true
+    }
+  ],
+  "dependencies": {
+    "k0i05/esp_mpu6050": "^1.2.1"
+  },
+  "frameworks": "espidf",
+  "platforms": "espressif32"
+}
