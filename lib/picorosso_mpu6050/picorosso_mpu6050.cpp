@@ -59,8 +59,36 @@ static void i2c0_mpu6050_task(void *pvParameters)
 
     for (;;)
     {
-
-
+        float temperature;
+        mpu6050_gyro_data_axes_t gyro_data;
+        mpu6050_accel_data_axes_t accel_data;
+        z_clock_t now;
+        clock_gettime(CLOCK_REALTIME, &now);
+        esp_err_t result = mpu6050_get_motion(dev_hdl, &gyro_data, &accel_data, &temperature);
+        if (result != ESP_OK)
+        {
+            ESP_LOGE(TAG, "device read failed (%s)", esp_err_to_name(result));
+        }
+        else
+        {
+            if (publisher_raw.topic.name != 0)
+            {
+                PicoRosso::set_timestamp(msg_raw.header.stamp, now);
+                msg_raw.angular_velocity.x = gyro_data.x_axis;
+                msg_raw.angular_velocity.y = gyro_data.y_axis;
+                msg_raw.angular_velocity.z = gyro_data.z_axis;
+                msg_raw.linear_acceleration.x = accel_data.x_axis;
+                msg_raw.linear_acceleration.y = accel_data.y_axis;
+                msg_raw.linear_acceleration.z = accel_data.z_axis;
+                pr_publish(publisher_raw, msg_raw);
+            }
+            if (publisher_temperature.topic.name != 0 && msg_temperature.temperature != temperature)
+            {
+                PicoRosso::set_timestamp(msg_temperature.header.stamp, now);
+                msg_temperature.temperature = temperature;
+                pr_publish(publisher_temperature, msg_temperature);
+            }
+        }
 
         // pause the task per defined wait period
         vTaskDelayUntil(&last_wake_time, MPU6050_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
