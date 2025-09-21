@@ -17,8 +17,11 @@
 #define REPORT_TASK_NAME "skid_report_task"
 #define REPORT_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
 #define REPORT_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
+#define PUBLISHER_BUF_SIZE 1024 //TODO
 
 static const char *TAG = "skid";
+
+static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
 static Sabertooth sabertooth;
 
@@ -195,7 +198,7 @@ static void report_task(void *)
     // msg_joint_state.header.stamp.nanosec = (uint32_t)now.tv_nsec;
     PicoRosso::set_timestamp(msg_joint_state.header.stamp);
 
-    pr_publish(publisher_joint, msg_joint_state);
+    pr_publish(publisher_joint, msg_joint_state, publisher_buf, sizeof(publisher_buf));
 
     vTaskDelayUntil(&last_wake_time, PERIOD_CONTROL_MS / portTICK_PERIOD_MS);
   }

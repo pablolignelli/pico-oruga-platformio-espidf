@@ -9,6 +9,7 @@
 #define I2C0_TASK_NAME "mpu6050_task"
 #define I2C0_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
 #define I2C0_TASK_PRIORITY (tskIDLE_PRIORITY + 0)
+#define PUBLISHER_BUF_SIZE 1024 //TODO
 
 // based on I2C_MPU6050_CONFIG_DEFAULT
 #define I2C_MPU6050_CONFIG {                                               \
@@ -22,6 +23,8 @@
 static mpu6050_handle_t dev_hdl;
 
 static const char *TAG = "imu";
+
+static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
 static picoros_publisher_t publisher_raw = {
     .topic =
@@ -81,13 +84,13 @@ static void i2c0_mpu6050_task(void *pvParameters)
                 msg_raw.linear_acceleration.x = accel_data.x_axis;
                 msg_raw.linear_acceleration.y = accel_data.y_axis;
                 msg_raw.linear_acceleration.z = accel_data.z_axis;
-                pr_publish(publisher_raw, msg_raw);
+                pr_publish(publisher_raw, msg_raw, publisher_buf, sizeof(publisher_buf));
             }
             if (publisher_temperature.topic.name != 0 && msg_temperature.temperature != temperature)
             {
                 PicoRosso::set_timestamp(msg_temperature.header.stamp, now);
                 msg_temperature.temperature = temperature;
-                pr_publish(publisher_temperature, msg_temperature);
+                pr_publish(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
             }
         }
 

@@ -7,8 +7,11 @@
 #define ODOM_TASK_NAME "odom_helper_task"
 #define ODOM_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
 #define ODOM_TASK_PRIORITY (tskIDLE_PRIORITY + 2)
+#define PUBLISHER_BUF_SIZE 1024 //TODO
 
 static const char *TAG = "odom";
+
+static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
 odom_t OdomHelper::pos;
 odom_t OdomHelper::vel;
@@ -125,7 +128,7 @@ static void odom_helper_task(void *pvParameters)
 
     PicoRosso::set_timestamp(msg_odom.header.stamp, now);
 
-    pr_publish(publisher_odom, msg_odom);
+    pr_publish(publisher_odom, msg_odom, publisher_buf, sizeof(publisher_buf));
 
     msg_transform.transform.translation.x = msg_odom.pose.pose.position.x;
     msg_transform.transform.translation.y = msg_odom.pose.pose.position.y;
@@ -135,7 +138,7 @@ static void odom_helper_task(void *pvParameters)
     PicoRosso::set_timestamp(msg_odom.header.stamp, now);
 
     // RCNOCHECK(rcl_publish(&pdescriptor_tf.publisher, &msg_tf, NULL));
-    pr_publish(publisher_tf, msg_tf);
+    pr_publish(publisher_tf, msg_tf, publisher_buf, sizeof(publisher_buf));
 
     // pause the task per defined wait period
     vTaskDelayUntil(&last_wake_time, ODOM_INTERVAL_MS / portTICK_PERIOD_MS);

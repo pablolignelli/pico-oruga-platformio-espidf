@@ -9,6 +9,7 @@
 #define I2C0_TASK_NAME "bmp680_task"
 #define I2C0_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
 #define I2C0_TASK_PRIORITY (tskIDLE_PRIORITY + 0)
+#define PUBLISHER_BUF_SIZE 1024 //TODO
 
 // based on I2C_BME680_CONFIG_DEFAULT
 #define I2C_BME680_CONFIG {                                         \
@@ -27,6 +28,8 @@
 static bme680_handle_t dev_hdl;
 
 static const char *TAG = "bme680";
+
+static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
 static picoros_publisher_t publisher_temperature = {
     .topic =
@@ -105,24 +108,24 @@ static void i2c0_bme680_task(void *pvParameters)
       {
         PicoRosso::set_timestamp(msg_temperature.header.stamp, now);
         msg_temperature.temperature = data.air_temperature;
-        pr_publish(publisher_temperature, msg_temperature);
+        pr_publish(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_humidity.topic.name != 0 && msg_humidity.relative_humidity != data.relative_humidity)
       {
         PicoRosso::set_timestamp(msg_humidity.header.stamp, now);
         msg_humidity.relative_humidity = data.relative_humidity;
-        pr_publish(publisher_humidity, msg_humidity);
+        pr_publish(publisher_humidity, msg_humidity, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_pressure.topic.name != 0 && msg_pressure.fluid_pressure != data.barometric_pressure / 100)
       {
         PicoRosso::set_timestamp(msg_pressure.header.stamp, now);
         msg_pressure.fluid_pressure = data.barometric_pressure / 100;
-        pr_publish(publisher_pressure, msg_pressure);
+        pr_publish(publisher_pressure, msg_pressure, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_gasr.topic.name != 0 && msg_gasr != data.gas_resistance / 1000)
       {
         msg_gasr = data.gas_resistance / 1000;
-        pr_publish(publisher_gasr, msg_gasr);
+        pr_publish(publisher_gasr, msg_gasr, publisher_buf, sizeof(publisher_buf));
       }
       /*
       ESP_LOGI(TAG, "air temperature:     %.2f °C", data.air_temperature);
