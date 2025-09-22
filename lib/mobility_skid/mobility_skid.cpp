@@ -198,7 +198,7 @@ static void report_task(void *)
     // msg_joint_state.header.stamp.nanosec = (uint32_t)now.tv_nsec;
     PicoRosso::set_timestamp(msg_joint_state.header.stamp);
 
-    pr_publish(publisher_joint, msg_joint_state, publisher_buf, sizeof(publisher_buf));
+    pr_publish_buf(publisher_joint, msg_joint_state, publisher_buf, sizeof(publisher_buf));
 
     vTaskDelayUntil(&last_wake_time, PERIOD_CONTROL_MS / portTICK_PERIOD_MS);
   }

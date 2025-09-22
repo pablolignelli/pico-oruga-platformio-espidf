@@ -84,13 +84,13 @@ static void i2c0_mpu6050_task(void *pvParameters)
                 msg_raw.linear_acceleration.x = accel_data.x_axis;
                 msg_raw.linear_acceleration.y = accel_data.y_axis;
                 msg_raw.linear_acceleration.z = accel_data.z_axis;
-                pr_publish(publisher_raw, msg_raw, publisher_buf, sizeof(publisher_buf));
+                pr_publish_buf(publisher_raw, msg_raw, publisher_buf, sizeof(publisher_buf));
             }
             if (publisher_temperature.topic.name != 0 && msg_temperature.temperature != temperature)
             {
                 PicoRosso::set_timestamp(msg_temperature.header.stamp, now);
                 msg_temperature.temperature = temperature;
-                pr_publish(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
+                pr_publish_buf(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
             }
         }
 

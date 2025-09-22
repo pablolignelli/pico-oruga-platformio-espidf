@@ -108,24 +108,24 @@ static void i2c0_bme680_task(void *pvParameters)
       {
         PicoRosso::set_timestamp(msg_temperature.header.stamp, now);
         msg_temperature.temperature = data.air_temperature;
-        pr_publish(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
+        pr_publish_buf(publisher_temperature, msg_temperature, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_humidity.topic.name != 0 && msg_humidity.relative_humidity != data.relative_humidity)
       {
         PicoRosso::set_timestamp(msg_humidity.header.stamp, now);
         msg_humidity.relative_humidity = data.relative_humidity;
-        pr_publish(publisher_humidity, msg_humidity, publisher_buf, sizeof(publisher_buf));
+        pr_publish_buf(publisher_humidity, msg_humidity, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_pressure.topic.name != 0 && msg_pressure.fluid_pressure != data.barometric_pressure / 100)
       {
         PicoRosso::set_timestamp(msg_pressure.header.stamp, now);
         msg_pressure.fluid_pressure = data.barometric_pressure / 100;
-        pr_publish(publisher_pressure, msg_pressure, publisher_buf, sizeof(publisher_buf));
+        pr_publish_buf(publisher_pressure, msg_pressure, publisher_buf, sizeof(publisher_buf));
       }
       if (publisher_gasr.topic.name != 0 && msg_gasr != data.gas_resistance / 1000)
       {
         msg_gasr = data.gas_resistance / 1000;
-        pr_publish(publisher_gasr, msg_gasr, publisher_buf, sizeof(publisher_buf));
+        pr_publish_buf(publisher_gasr, msg_gasr, publisher_buf, sizeof(publisher_buf));
       }
       /*
       ESP_LOGI(TAG, "air temperature:     %.2f °C", data.air_temperature);
