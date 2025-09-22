@@ -5,6 +5,9 @@
 
 #define BME680_SAMPLE_INTERVAL_MS (1000)
 
+// internal driver's debug level
+#define BME680_DEBUG_LEVEL ESP_LOG_INFO 
+
 #include "picoros.h"
 #include "picoserdes.h"
 

@@ -22,7 +22,7 @@
 
 static mpu6050_handle_t dev_hdl;
 
-static const char *TAG = "imu";
+static const char *TAG = "pr_mpu6050";
 
 static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 

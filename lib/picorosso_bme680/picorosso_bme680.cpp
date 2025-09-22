@@ -27,7 +27,7 @@
 
 static bme680_handle_t dev_hdl;
 
-static const char *TAG = "bme680";
+static const char *TAG = "pr_bme680";
 
 static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
@@ -153,6 +153,8 @@ bool EnvBME680::setup(i2c_master_bus_handle_t &i2c0_bus_hdl,
                       const char *topic_gas_resistance)
 {
   ESP_LOGD(TAG, "Setting up...");
+
+  esp_log_level_set("bme680", BME680_DEBUG_LEVEL); 
 
   // initialize i2c device configuration
   bme680_config_t dev_cfg = I2C_BME680_CONFIG;
