@@ -71,14 +71,14 @@ void Sabertooth::autobaud(uart_port_t uart_num, bool dontWait)
 {
   if (!dontWait)
   {
-    vTaskDelay(1500 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(1500));
   }
   char aa = 0xAA;
   uart_write_bytes(uart_num, &aa, sizeof(aa));
 
   if (!dontWait)
   {
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
 
@@ -185,7 +185,7 @@ void Sabertooth::setBaudRate(long baudRate)
   // (2) Sabertooth takes about 200 ms after setting the baud rate to
   //     respond to commands again (it restarts).
   // So, this 500 ms delay should deal with this.
-  vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(pdMS_TO_TICKS(500));
 }
 
 void Sabertooth::setDeadband(char value)

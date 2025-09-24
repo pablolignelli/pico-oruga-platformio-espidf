@@ -138,7 +138,7 @@ static void i2c0_bme680_task(void *pvParameters)
     }
 
     // pause the task per defined wait period
-    vTaskDelayUntil(&last_wake_time, BME680_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(BME680_SAMPLE_INTERVAL_MS));
   }
 
   // free resources

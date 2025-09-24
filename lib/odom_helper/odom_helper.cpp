@@ -141,7 +141,7 @@ static void odom_helper_task(void *pvParameters)
     pr_publish_buf(publisher_tf, msg_tf, publisher_buf, sizeof(publisher_buf));
 
     // pause the task per defined wait period
-    vTaskDelayUntil(&last_wake_time, ODOM_INTERVAL_MS / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(ODOM_INTERVAL_MS));
   }
 }
 

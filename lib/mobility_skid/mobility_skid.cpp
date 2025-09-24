@@ -155,7 +155,7 @@ static void compute_movement(float time_step)
 
 static void cmd_vel_cb(uint8_t *rx_data, size_t data_len)
 {
-  set_control_time_ms = xTaskGetTickCount() / portTICK_PERIOD_MS;
+  set_control_time_ms = pdTICKS_TO_MS(xTaskGetTickCount());
 
   ros_TwistStamped msg_cmd_vel = {};
   if (ps_deserialize(rx_data, &msg_cmd_vel, data_len))
@@ -200,7 +200,7 @@ static void report_task(void *)
 
     pr_publish_buf(publisher_joint, msg_joint_state, publisher_buf, sizeof(publisher_buf));
 
-    vTaskDelayUntil(&last_wake_time, PERIOD_CONTROL_MS / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PERIOD_REPORT_MS));
   }
 }
 
@@ -210,7 +210,7 @@ static void control_task(void *)
   {
     TickType_t last_wake_time = xTaskGetTickCount();
 
-    uint64_t now_ms = last_wake_time / portTICK_PERIOD_MS;
+    uint64_t now_ms = pdTICKS_TO_MS(last_wake_time);
     uint64_t time_step_ms = now_ms - control_cb_time_ms;
     control_cb_time_ms = now_ms;
     float time_step = time_step_ms / 1000.0;
@@ -236,7 +236,7 @@ static void control_task(void *)
       sabertooth.motor(2, MOTOR_OUT_rgt_MULT * (int8_t)power_rgt);
     }
 
-    vTaskDelayUntil(&last_wake_time, PERIOD_CONTROL_MS / portTICK_PERIOD_MS);
+    vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PERIOD_CONTROL_MS));
   }
 }
 
@@ -302,7 +302,7 @@ bool MobilitySkid::setup()
   ESP_LOGI(TAG, "Declaring subscriber on [%s]", subscription_cmd_vel.topic.name);
   picoros_subscriber_declare(&PicoRosso::node, &subscription_cmd_vel);
 
-  control_cb_time_ms = xTaskGetTickCount() / portTICK_PERIOD_MS;
+  control_cb_time_ms = pdMS_TO_TICKS(xTaskGetTickCount());
   // PicoRosso::timer.every(PERIOD_CONTROL_MS, &control_cb);
   xTaskCreate(
       control_task,

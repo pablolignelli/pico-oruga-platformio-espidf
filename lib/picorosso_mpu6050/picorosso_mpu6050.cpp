@@ -95,7 +95,7 @@ static void i2c0_mpu6050_task(void *pvParameters)
         }
 
         // pause the task per defined wait period
-        vTaskDelayUntil(&last_wake_time, MPU6050_SAMPLE_INTERVAL_MS / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(MPU6050_SAMPLE_INTERVAL_MS));
     }
 }
 

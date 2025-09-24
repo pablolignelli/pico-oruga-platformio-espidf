@@ -81,7 +81,7 @@ void app_main()
     wifi.connect(WIFI_SSID, WIFI_PASSWORD);
     while (wifi.connected == false)
     {
-        vTaskDelay(20 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
     #endif
 
@@ -105,7 +105,9 @@ void app_main()
 
     while (true)
     {
+        TickType_t last_wake_time = xTaskGetTickCount();
+
         picorosso.rosout.out("Alive!", __FILE__, __func__, __LINE__, ROSLOG_INFO);
-        vTaskDelay(60000 / portTICK_PERIOD_MS);
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(60000));
     }
 }
