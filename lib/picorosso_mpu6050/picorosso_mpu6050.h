@@ -15,8 +15,8 @@ class ImuMPU6050
 public:
   ImuMPU6050();
   static bool setup(i2c_master_bus_handle_t &i2c0_bus_hdl,
-                    const char *topic_raw = "/imu/raw",
-                    const char *topic_temp = "/imu/temperature");
+                    const char *topic_raw = "imu/raw",
+                    const char *topic_temp = "imu/temperature");
 };
 
 #endif // __PICOROSSO_MPU6050_H
