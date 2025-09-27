@@ -6,7 +6,7 @@ class Fpid
 
 public:
   Fpid();
-  Fpid(float min_out, float max_out, float kf, float kp, float ki, float kd);
+  Fpid(float min_out, float max_out);
 
   float compute(float setpoint, float measure, float time_step);
 

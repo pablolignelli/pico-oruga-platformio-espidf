@@ -7,14 +7,14 @@
 #define ODOM_TASK_NAME "odom_helper_task"
 #define ODOM_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
 #define ODOM_TASK_PRIORITY (tskIDLE_PRIORITY + 2)
-#define PUBLISHER_BUF_SIZE 1024 //TODO
+#define PUBLISHER_BUF_SIZE 1024 // TODO
 
 static const char *TAG = "odom";
 
 static uint8_t publisher_buf[PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
 
-odom_t OdomHelper::pos;
-odom_t OdomHelper::vel;
+odom_t OdomHelper::pos = {0.0, 0.0, 0.0};
+odom_t OdomHelper::vel = {0.0, 0.0, 0.0};
 
 // Odometry message and publisher
 static ros_Odometry msg_odom;
@@ -92,10 +92,10 @@ void OdomHelper::update_pos(float vx, float vy, float vphi, float dt)
   float dx = vx * dt;
   float dy = vy * dt;
 
-  OdomHelper::pos.x += cos(OdomHelper::pos.phi) * dx;
-  OdomHelper::pos.y += sin(OdomHelper::pos.phi) * dx;
-  OdomHelper::pos.x += cos(phi_y) * dy;
-  OdomHelper::pos.y += sin(phi_y) * dy;
+  OdomHelper::pos.x += cosf(OdomHelper::pos.phi) * dx;
+  OdomHelper::pos.y += sinf(OdomHelper::pos.phi) * dx;
+  OdomHelper::pos.x += cosf(phi_y) * dy;
+  OdomHelper::pos.y += sinf(phi_y) * dy;
 }
 
 static void odom_helper_task(void *pvParameters)

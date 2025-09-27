@@ -39,6 +39,8 @@ Sabertooth::Sabertooth() {}
 
 void Sabertooth::init(char address, uart_port_t uart_num, int tx_pin)
 {
+  ESP_LOGD(TAG, "Setting up...");
+  
   _address = address;
   _uart_num = uart_num;
 
@@ -60,6 +62,8 @@ void Sabertooth::init(char address, uart_port_t uart_num, int tx_pin)
   ESP_ERROR_CHECK(uart_param_config(uart_num, &uart_config));
   // Set UART pins(TX: IO4, RX: IO5, RTS: IO18, CTS: IO19)
   ESP_ERROR_CHECK(uart_set_pin(uart_num, tx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
+
+  ESP_LOGD(TAG, "Setting up done.");
 }
 
 void Sabertooth::autobaud(bool dontWait)
@@ -84,27 +88,22 @@ void Sabertooth::autobaud(uart_port_t uart_num, bool dontWait)
 
 void Sabertooth::command(char cmd, char value)
 {
-  // port().write(address());
-  // port().write(command);
-  // port().write(value);
-  // port().write((address() + command + value) & 0b01111111);
   char s[] = {
       _address,
       cmd,
       value,
       static_cast<char>((static_cast<char>(_address + cmd + value)) & static_cast<char>(0b01111111))};
 
-  //ESP_LOGE(TAG, "command [%02x %02x %02x %02x]", s[0], s[1], s[2], s[3]);
+  //ESP_LOGD(TAG, "command [%02x %02x %02x %02x]", s[0], s[1], s[2], s[3]);
   uart_write_bytes(_uart_num, &s, sizeof(s));
 }
 
 void Sabertooth::throttleCommand(char cmd, int power)
 {
-  if (power < -126)
-    power = -126;
-  else if (power > 126)
+  power = abs(power);
+  if (power > 126)
     power = 126;
-  command(cmd, (char)abs(power));
+  command(cmd, (char)power);
 }
 
 void Sabertooth::motor(int power)

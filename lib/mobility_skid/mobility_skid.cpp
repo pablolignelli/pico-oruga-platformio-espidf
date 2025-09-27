@@ -12,12 +12,12 @@
 
 #define TSK_MINIMAL_STACK_SIZE (1024)
 #define CONTROL_TASK_NAME "skid_control_task"
-#define CONTROL_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
+#define CONTROL_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 9)
 #define CONTROL_TASK_PRIORITY (tskIDLE_PRIORITY + 2)
 #define REPORT_TASK_NAME "skid_report_task"
-#define REPORT_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 8)
+#define REPORT_TASK_STACK_SIZE (TSK_MINIMAL_STACK_SIZE * 9)
 #define REPORT_TASK_PRIORITY (tskIDLE_PRIORITY + 1)
-#define PUBLISHER_BUF_SIZE 1024 //TODO
+#define PUBLISHER_BUF_SIZE 1024 // TODO
 
 static const char *TAG = "skid";
 
@@ -34,8 +34,8 @@ static ESP32Encoder encoder_fr_rgt;
 static ESP32Encoder encoder_rr_rgt;
 // static unsigned long last_encoder_us = 0UL;
 
-static Fpid pid_lft(-126, 126, PID_LEFT_KF, PID_LEFT_KP, PID_LEFT_KI, PID_LEFT_KD);
-static Fpid pid_rgt(-126, 126, PID_RIGHT_KF, PID_RIGHT_KP, PID_RIGHT_KI, PID_RIGHT_KD);
+static Fpid pid_lft(-126, 126);
+static Fpid pid_rgt(-126, 126);
 
 static OdomHelper odom;
 
@@ -63,8 +63,8 @@ static void cmd_vel_cb(uint8_t *rx_data, size_t data_len);
 picoros_subscriber_t subscription_cmd_vel = {
     .topic = {
         .name = (char *)"cmd_vel",
-        .type = ROSTYPE_NAME(ros_Odometry),
-        .rihs_hash = ROSTYPE_HASH(ros_Odometry),
+        .type = ROSTYPE_NAME(ros_TwistStamped),
+        .rihs_hash = ROSTYPE_HASH(ros_TwistStamped),
     },
     .user_callback = cmd_vel_cb,
 };
@@ -92,7 +92,11 @@ static int64_t enc_count_fr_lft = 0;
 static int64_t enc_count_fr_rgt = 0;
 static int64_t enc_count_rr_rgt = 0;
 
-MobilitySkid::MobilitySkid() {};
+MobilitySkid::MobilitySkid()
+{
+  pid_lft.update_k_dependent_ideal(PID_LEFT_KF, PID_LEFT_KC, PID_LEFT_TI, PID_LEFT_TD);
+  pid_rgt.update_k_dependent_ideal(PID_RIGHT_KF, PID_RIGHT_KC, PID_RIGHT_TI, PID_RIGHT_TD);
+};
 
 static void set_target_velocities(float linear, float angular)
 {
@@ -113,6 +117,13 @@ static void set_target_velocities(float linear, float angular)
 
 static void compute_movement(float time_step)
 {
+
+  if (time_step == 0.0f)
+  {
+    //ESP_LOGW(TAG, "compute_movement called with zero time_step, skipping.");
+    return;
+  }
+
   int64_t count_fr_lft;
   int64_t count_fr_rgt;
   int64_t count_rr_lft;
@@ -141,16 +152,10 @@ static void compute_movement(float time_step)
   current_v_lft = WHEEL_RADIUS * (wheel_angular_rr_lft + wheel_angular_fr_lft) / 2; // FIXME
   current_v_rgt = WHEEL_RADIUS * (wheel_angular_rr_rgt + wheel_angular_fr_rgt) / 2;
 
-  float current_linear = (current_v_lft + current_v_rgt) / 2;                         // m/s
-  float current_angular = atan((current_v_rgt - current_v_lft) / LR_WHEELS_DISTANCE); // rad/s
+  float current_linear = (current_v_lft + current_v_rgt) / 2;                          // m/s
+  float current_angular = atanf((current_v_rgt - current_v_lft) / LR_WHEELS_DISTANCE); // rad/s
 
-  odom.update_pos(current_linear, 0.0, current_angular, time_step);
-
-  /*
-  D_print(current_linear);
-  D_print(" m/s | rad/s ");
-  D_println(current_angular);
-  //  */
+  odom.update_pos(current_linear, 0.0f, current_angular, time_step);
 }
 
 static void cmd_vel_cb(uint8_t *rx_data, size_t data_len)
@@ -161,12 +166,7 @@ static void cmd_vel_cb(uint8_t *rx_data, size_t data_len)
   if (ps_deserialize(rx_data, &msg_cmd_vel, data_len))
   {
     // TODO verify msg_cmd_vel.header.stamp
-    /*
-    D_print("cmd_vel: ");
-    D_print(msg_cmd_vel.linear.x);
-    D_print(" ");
-    D_println(msg_cmd_vel.angular.z);
-    */
+
     set_target_velocities(
         msg_cmd_vel.twist.linear.x,
         msg_cmd_vel.twist.angular.z);
@@ -302,7 +302,7 @@ bool MobilitySkid::setup()
   ESP_LOGI(TAG, "Declaring subscriber on [%s]", subscription_cmd_vel.topic.name);
   picoros_subscriber_declare(&PicoRosso::node, &subscription_cmd_vel);
 
-  control_cb_time_ms = pdMS_TO_TICKS(xTaskGetTickCount());
+  control_cb_time_ms = pdTICKS_TO_MS(xTaskGetTickCount());
   // PicoRosso::timer.every(PERIOD_CONTROL_MS, &control_cb);
   xTaskCreate(
       control_task,

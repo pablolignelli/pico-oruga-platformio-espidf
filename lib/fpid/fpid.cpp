@@ -4,13 +4,9 @@ Fpid::Fpid()
 {
 }
 
-Fpid::Fpid(float min_out, float max_out, float kf, float kp, float ki, float kd)
+Fpid::Fpid(float min_out, float max_out)
     : min_out(min_out),
-      max_out(max_out),
-      kf(kf),
-      kp(kp),
-      ki(ki),
-      kd(kd)
+      max_out(max_out)
 {
 }
 
@@ -35,7 +31,7 @@ float Fpid::compute(float setpoint, float measure, float time_step)
   pid += kp * error;
   pid += new_ki_term;
 
-  if (kd != 0.0)
+  if (kd != 0.0f)
   {
     // derivative on measurement
     float kd_term = kd * (measure - prev_measure) / time_step; 

@@ -32,7 +32,7 @@ i2c_master_bus_handle_t i2c0_bus_hdl;
 //#define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=115200"
 #define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=921600"
 
-#define ZENOH_NODE_NAME "oruga"
+#define ZENOH_NODE_NAME "pico_oruga"
 ///////////////////////////////////////////////////////////////////////////
 
 #if defined(WIFI_SSID)
