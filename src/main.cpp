@@ -33,6 +33,8 @@ i2c_master_bus_handle_t i2c0_bus_hdl;
 #define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=921600"
 
 #define ZENOH_NODE_NAME "pico_oruga"
+
+#define ROS_DOMAIN_ID 100
 ///////////////////////////////////////////////////////////////////////////
 
 #if defined(WIFI_SSID)
@@ -90,7 +92,7 @@ void app_main()
     ESP_ERROR_CHECK(i2c_new_master_bus(&i2c0_bus_cfg, &i2c0_bus_hdl));
 
     // PicoRosso initalization //////////////////////////////
-    picorosso.setup(ZENOH_NODE_NAME, ZENOH_ROUTER_ADDRESS);
+    picorosso.setup(ZENOH_NODE_NAME, ZENOH_ROUTER_ADDRESS, ROS_DOMAIN_ID);
 
     // Modules initalization ////////////////////////////////
     ticker.setup("tick");
