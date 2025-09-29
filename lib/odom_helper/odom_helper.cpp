@@ -135,7 +135,7 @@ static void odom_helper_task(void *pvParameters)
     msg_transform.transform.translation.z = msg_odom.pose.pose.position.z;
     msg_transform.transform.rotation = msg_odom.pose.pose.orientation;
 
-    PicoRosso::set_timestamp(msg_odom.header.stamp, now);
+    PicoRosso::set_timestamp(msg_transform.header.stamp, now);
 
     // RCNOCHECK(rcl_publish(&pdescriptor_tf.publisher, &msg_tf, NULL));
     pr_publish_buf(publisher_tf, msg_tf, publisher_buf, sizeof(publisher_buf));
