@@ -2,9 +2,12 @@
 #include <freertos/task.h>
 #include <stdlib.h>
 #include <esp_log.h>
-#include <nvs_flash.h>
 #include <esp_err.h>
 #include "driver/i2c_master.h"
+#if defined(WIFI_SSID)
+#include <nvs_flash.h>
+#endif
+#include "driver/gpio.h"
 
 #define I2C0_MASTER_PORT I2C_NUM_0
 #define I2C0_MASTER_SDA_IO GPIO_NUM_21
@@ -24,12 +27,12 @@
 i2c_master_bus_config_t i2c0_bus_cfg = I2C0_MASTER_CONFIG_DEFAULT;
 i2c_master_bus_handle_t i2c0_bus_hdl;
 
-//#define WIFI_SSID ""
+// #define WIFI_SSID ""
 #define WIFI_PASSWORD ""
 
-//#define ZENOH_ROUTER_ADDRESS "tcp/192.168.10.235:7447"
-//#define ZENOH_ROUTER_ADDRESS "tcp/192.168.101.2:7447"
-//#define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=115200"
+// #define ZENOH_ROUTER_ADDRESS "tcp/192.168.10.235:7447"
+// #define ZENOH_ROUTER_ADDRESS "tcp/192.168.101.2:7447"
+// #define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=115200"
 #define ZENOH_ROUTER_ADDRESS "serial/UART_0#baudrate=921600"
 
 #define ZENOH_NODE_NAME "pico_oruga"
@@ -57,6 +60,7 @@ MobilitySkid mobility;
 #include "ticker.h"
 Ticker ticker;
 
+#if defined(WIFI_SSID)
 void InitNVS()
 {
     esp_err_t ret = nvs_flash_init();
@@ -67,6 +71,7 @@ void InitNVS()
     }
     ESP_ERROR_CHECK(ret);
 }
+#endif
 
 extern "C"
 {
