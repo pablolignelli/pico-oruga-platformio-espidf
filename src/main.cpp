@@ -9,6 +9,8 @@
 #endif
 #include "driver/gpio.h"
 
+#define LED_WAIT_PIN GPIO_NUM_5
+#define LED_CONN_PIN GPIO_NUM_18
 #define I2C0_MASTER_PORT I2C_NUM_0
 #define I2C0_MASTER_SDA_IO GPIO_NUM_21
 #define I2C0_MASTER_SCL_IO GPIO_NUM_22
@@ -82,15 +84,35 @@ void app_main()
 {
     ESP_LOGI("main", "Booting...");
 
-    // Start NVS and Wifi
-    #if defined(WIFI_SSID)
+    gpio_config_t io_conf_wait = {
+        .pin_bit_mask = (1ULL << LED_WAIT_PIN), // Select GPIO
+        .mode = GPIO_MODE_OUTPUT,               // Set as output
+        .pull_up_en = GPIO_PULLUP_DISABLE,      // Disable pull-up
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,  // Disable pull-down
+        .intr_type = GPIO_INTR_DISABLE          // Disable interrupts
+    };
+    gpio_config(&io_conf_wait);
+    gpio_set_level(LED_WAIT_PIN, 1);
+
+    gpio_config_t io_conf_conn = {
+        .pin_bit_mask = (1ULL << LED_CONN_PIN), // Select GPIO
+        .mode = GPIO_MODE_OUTPUT,               // Set as output
+        .pull_up_en = GPIO_PULLUP_DISABLE,      // Disable pull-up
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,  // Disable pull-down
+        .intr_type = GPIO_INTR_DISABLE          // Disable interrupts
+    };
+    gpio_config(&io_conf_conn);
+    gpio_set_level(LED_CONN_PIN, 0);
+
+// Start NVS and Wifi
+#if defined(WIFI_SSID)
     InitNVS();
     wifi.connect(WIFI_SSID, WIFI_PASSWORD);
     while (wifi.connected == false)
     {
         vTaskDelay(pdMS_TO_TICKS(50));
     }
-    #endif
+#endif
 
     // Start I2C
     /* instantiate i2c master bus 0 */
@@ -98,6 +120,7 @@ void app_main()
 
     // PicoRosso initalization //////////////////////////////
     picorosso.setup(ZENOH_NODE_NAME, ZENOH_ROUTER_ADDRESS, ROS_DOMAIN_ID);
+    gpio_set_level(LED_CONN_PIN, 1);
 
     // Modules initalization ////////////////////////////////
     ticker.setup("tick");
@@ -108,6 +131,7 @@ void app_main()
     // Publisher task
     // xTaskCreate(publish_twist, "publish_twist_task", 4096, NULL, 1, NULL);
 
+    gpio_set_level(LED_WAIT_PIN, 0);
     ESP_LOGI("main", "Booting completed.");
 
     while (true)
