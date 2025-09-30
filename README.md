@@ -2,6 +2,8 @@
 
 This is a pico-zenoh client for the Oruga's ESP32 microcontroller.
 
+![Oruga robot](https://github.com/xopxe/pico-oruga-platformio-espidf/blob/main/docs/oruga.jpg?raw=true)
+
 ## Instalation
 
 * Open this project in VSCode with Platformio extension installed.
