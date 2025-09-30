@@ -1,12 +1,12 @@
 # Oruga microcontroller code
 
-This is a pico-zenoh client for the Oruga's ESP32 microcontorller.
+This is a pico-zenoh client for the Oruga's ESP32 microcontroller.
 
 ## Instalation
 
-* Open this roject in VSCode with Platformio extension installed.
+* Open this project in VSCode with Platformio extension installed.
 
-* Install aditional dependencies:
+* Install additional dependencies:
 
 ```sh
 cd .pio/libdeps/pico32
