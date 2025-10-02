@@ -1,7 +1,6 @@
 # Oruga microcontroller code
 
-This is a pico-zenoh client for the Oruga's ESP32 microcontroller.
-
+This is a Pico-ROS client for the Oruga's ESP32 microcontroller.
 ## The robot
 
 Oruga is a differential tracked robot for outdoor use. It is based on the [Lynxmotion A4WD3](https://www.lynxmotion.com/a4wd3-rugged-rovers/) platform and has a custom-built ESP32-based control system.

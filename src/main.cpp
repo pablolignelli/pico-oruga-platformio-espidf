@@ -4,9 +4,7 @@
 #include <esp_log.h>
 #include <esp_err.h>
 #include "driver/i2c_master.h"
-#if defined(WIFI_SSID)
 #include <nvs_flash.h>
-#endif
 #include "driver/gpio.h"
 
 #define LED_WAIT_PIN GPIO_NUM_5
