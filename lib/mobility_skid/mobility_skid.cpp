@@ -117,7 +117,6 @@ static void set_target_velocities(float linear, float angular)
 
 static void compute_movement(float time_step)
 {
-
   if (time_step == 0.0f)
   {
     //ESP_LOGW(TAG, "compute_movement called with zero time_step, skipping.");

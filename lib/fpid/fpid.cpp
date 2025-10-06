@@ -14,16 +14,6 @@ float Fpid::compute(float setpoint, float measure, float time_step)
 {
   float pid;
 
-  // setpoint is constrained between min and max to prevent pid from having too much error
-  if (setpoint > max_out)
-  {
-    setpoint = max_out;
-  }
-  else if (setpoint < min_out)
-  {
-    setpoint = min_out;
-  }
-
   float error = setpoint - measure;
   float new_ki_term = ki_term + ki * error * time_step;
 
