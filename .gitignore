@@ -3,3 +3,13 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+.vscode/settings.json
+install/
+build/
+log/
+compile_commands.json
+.cache/
+.clang-format
+.clangd
+sdkconfig.pico32.old
+
