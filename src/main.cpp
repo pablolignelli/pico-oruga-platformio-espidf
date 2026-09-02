@@ -58,8 +58,11 @@ ImuMPU6050 imu;
 MobilitySkid mobility;
 
 #include "infrastructure.h"
-#define MOTOR_EMERGENCY_STOP_PIN GPIO_NUM_19
 #define EMERGENCY_STOP_BUTTON_PIN GPIO_NUM_4
+
+static void on_emergency_stop(bool stopped) {
+    mobility.set_motor_enable(!stopped);
+}
 
 #include "ticker.h"
 Ticker ticker;
@@ -128,7 +131,7 @@ void app_main()
     ticker.setup("tick");
     env.setup(i2c0_bus_hdl);
     imu.setup(i2c0_bus_hdl);
-    Infrastructure::setup(MOTOR_EMERGENCY_STOP_PIN, EMERGENCY_STOP_BUTTON_PIN);
+    Infrastructure::setup(EMERGENCY_STOP_BUTTON_PIN, on_emergency_stop);
     mobility.setup();
 
     // Publisher task
