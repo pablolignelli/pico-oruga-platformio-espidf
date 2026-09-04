@@ -28,6 +28,8 @@ static Sabertooth sabertooth;
 static unsigned long set_control_time_ms = 0;
 static unsigned long control_cb_time_ms = 0;
 
+static bool motor_enabled = true;
+
 static ESP32Encoder encoder_rr_lft;
 static ESP32Encoder encoder_fr_lft;
 static ESP32Encoder encoder_fr_rgt;
@@ -205,7 +207,7 @@ static void report_task(void *)
 
 static void control_task(void *)
 {
-  for (;;)
+  while (true)
   {
     TickType_t last_wake_time = xTaskGetTickCount();
 
@@ -216,9 +218,9 @@ static void control_task(void *)
 
     compute_movement(time_step);
 
-    if (((now_ms - set_control_time_ms) > STOP_TIMEOUT_MS))
+    if (!motor_enabled || ((now_ms - set_control_time_ms) > STOP_TIMEOUT_MS))
     {
-      // sabertooth watchdog must have stopped the motor, set as stopped and skip
+      // motors disabled or sabertooth watchdog may have stopped the motor, set as stopped and skip
       MobilitySkid::stop();
     }
     else
@@ -247,9 +249,12 @@ void MobilitySkid::stop()
   sabertooth.stop();
 }
 
-// TODO
 void MobilitySkid::set_motor_enable(bool enable)
 {
+  motor_enabled = enable;
+  if (!enable) {
+    stop();
+  }
 }
 
 bool MobilitySkid::setup()
