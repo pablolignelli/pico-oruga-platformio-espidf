@@ -17,8 +17,8 @@ public:
      *
      * @return true on success, false if the GPIO/ISR setup failed.
      */
-    static bool setup(gpio_num_t emergency_stop_button, EmergencyStopCallback on_emergency_stop,
-            const char *topic_emergency_stop = "infrastructure/emergency_stop");
+    static bool setup(gpio_num_t emergency_stop_button, EmergencyStopCallback on_emergency_stop, gpio_num_t adc_battery_reader,
+            const char *topic_emergency_stop = "infrastructure/emergency_stop", const char *topic_battery_voltage = "sensor_msgs/msg/BatteryState/battery_voltage");
 
     /**
      * Notifies of an emergency stop state change: runs the emergency stop callback
