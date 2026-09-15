@@ -7,14 +7,16 @@
 #include "picoros.h"
 #include "picorosso.h"
 #include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include <math.h>
 
 /** Time to let bounce settle before re-reading the level */
 #define DEBOUNCE_SETTLE_MS 20
 
-#define BATTERY_READER_PERIOD 1000
+#define BATTERY_READER_PERIOD 1'000
 
 #define BATTERY_READER_TASK_NAME "battery_read_task"
-#define STOP_BUTTON_TASK_NAME "stop_button_task"
+#define STOP_BUTTON_TASK_NAME "estop_button_task"
 #define BATTERY_READER_TASK_PRIORITY (tskIDLE_PRIORITY + 2)
 #define STOP_BUTTON_TASK_PRIORITY 10
 
@@ -28,6 +30,7 @@ static Infrastructure::EmergencyStopCallback emergency_stop_state_cb;
 
 static adc_channel_t channel;
 static adc_oneshot_unit_handle_t handle;
+static adc_cali_handle_t adc_calibration_handle;
 
 static picoros_publisher_t publisher_emergency_stop = {
     .topic = {
@@ -40,8 +43,8 @@ static picoros_publisher_t publisher_emergency_stop = {
 static picoros_publisher_t publisher_battery_voltage = {
     .topic = {
         .name = NULL,
-        .type = ROSTYPE_NAME(ros_Bool),
-        .rihs_hash = ROSTYPE_HASH(ros_Bool)
+        .type = ROSTYPE_NAME(ros_Int32),
+        .rihs_hash = ROSTYPE_HASH(ros_Int32)
     }
 };
 
@@ -71,9 +74,12 @@ static void emergency_stop_button_task(void *arg) {
 static void battery_voltage_reader_task(void *arg) {
     while(true){
         int raw;
+        int result;
         ESP_ERROR_CHECK(adc_oneshot_read(handle, channel, &raw));
-
         ESP_LOGI("adc", "Raw ADC: %d", raw);
+
+        ESP_ERROR_CHECK(adc_oneshot_get_calibrated_result(handle, adc_calibration_handle, channel, &result));
+        ESP_LOGI("adc", "Calibrated ADC (mV): %d", result);
 
         vTaskDelay(pdMS_TO_TICKS(BATTERY_READER_PERIOD));
     }
@@ -85,6 +91,17 @@ static void setup_adc() {
 
     adc_oneshot_unit_init_cfg_t config = {.unit_id=unit_id, .clk_src=ADC_RTC_CLK_SRC_DEFAULT, .ulp_mode=ADC_ULP_MODE_RISCV};
     ESP_ERROR_CHECK(adc_oneshot_new_unit(&config, &handle));
+
+    adc_oneshot_chan_cfg_t chann_config = {
+        .atten = ADC_ATTEN_DB_12,
+        .bitwidth = ADC_BITWIDTH_DEFAULT
+    };
+
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(handle, channel, &chann_config));
+
+    adc_cali_line_fitting_config_t calibration_config = { .unit_id = ADC_UNIT_1, .atten = ADC_ATTEN_DB_12, .bitwidth = ADC_BITWIDTH_DEFAULT, .default_vref = 0};
+    adc_cali_create_scheme_line_fitting(&calibration_config, &adc_calibration_handle);
+
 }
 
 static bool setup_gpio() {
@@ -108,8 +125,8 @@ static bool setup_gpio() {
 
     gpio_config_t battery_voltage_reader_conf = {   .pin_bit_mask = (1ULL << adc_battery_reader),
                                                     .mode = GPIO_MODE_INPUT,
-                                                    .pull_up_en = GPIO_PULLUP_ENABLE,
-                                                    .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                                                    .pull_up_en = GPIO_PULLUP_DISABLE,
+                                                    .pull_down_en = GPIO_PULLDOWN_ENABLE,
                                                     .intr_type = GPIO_INTR_DISABLE};
     gpio_config(&battery_voltage_reader_conf);
     setup_adc();
@@ -151,4 +168,8 @@ bool Infrastructure::setup(gpio_num_t emergency_stop_button,
 void Infrastructure::trigger_emergency_stop(bool stopped) {
     emergency_stop_state_cb(stopped);
     pr_publish(publisher_emergency_stop, stopped);
+}
+
+void Infrastructure::notify_battery_voltage(int32_t voltage) {
+    pr_publish(publisher_battery_voltage, voltage);
 }

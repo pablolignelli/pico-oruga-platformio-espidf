@@ -1,4 +1,5 @@
 #include "soc/gpio_num.h"
+#include <cstdint>
 #ifndef __INFRASTRUCTURE_H
 #define __INFRASTRUCTURE_H
 
@@ -26,6 +27,9 @@ public:
      * @param stopped true if the emergency stop is engaged, false if released.
      */
     static void trigger_emergency_stop(bool stopped);
+
+
+    static void notify_battery_voltage(int32_t voltage);
 };
 
 #endif // __INFRASTRUCTURE_H
