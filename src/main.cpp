@@ -60,9 +60,9 @@ MobilitySkid mobility;
 #include "infrastructure.h"
 #define EMERGENCY_STOP_BUTTON_PIN GPIO_NUM_4
 #define BATTERY_VOLTAGE_READER_PIN GPIO_NUM_32
-// Battery voltage / ADC pin voltage, i.e. (R_top + R_bottom) / R_bottom of the divider.
-// TODO: set to the real divider on the board (not in docs/oruga_board.kicad_sch yet).
-#define BATTERY_VOLTAGE_DIVIDER_RATIO 1.0f
+// Battery voltage / ADC pin voltage of the hand-made divider (not in docs/oruga_board.kicad_sch):
+// R1 = 47k from battery to the pin, R2 = 10k from the pin to GND -> (47k + 10k) / 10k
+#define BATTERY_VOLTAGE_DIVIDER_RATIO 5.7f
 
 static void on_emergency_stop(bool stopped) {
     mobility.set_motor_enable(!stopped);
