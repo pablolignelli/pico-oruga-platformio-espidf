@@ -27,12 +27,14 @@
 #define STOP_BUTTON_TASK_NAME "estop_button_task"
 #define BATTERY_READER_TASK_PRIORITY (tskIDLE_PRIORITY + 2)
 #define STOP_BUTTON_TASK_PRIORITY 10
+#define BATTERY_PUBLISHER_BUF_SIZE 256
 
 
 static const char *TAG = "infrastructure";
 
 static gpio_num_t emergency_stop_button;
 static gpio_num_t adc_battery_reader;
+static float battery_divider_ratio;
 static TaskHandle_t emergency_stop_task_handle;
 static Infrastructure::EmergencyStopCallback emergency_stop_state_cb;
 
@@ -48,12 +50,34 @@ static picoros_publisher_t publisher_emergency_stop = {
     }
 };
 
-static picoros_publisher_t publisher_battery_voltage = {
+static uint8_t publisher_buf[BATTERY_PUBLISHER_BUF_SIZE]; // pre-allocated buffer for serialization
+
+static picoros_publisher_t publisher_battery = {
     .topic = {
         .name = NULL,
-        .type = ROSTYPE_NAME(ros_Int32),
-        .rihs_hash = ROSTYPE_HASH(ros_Int32)
+        .type = ROSTYPE_NAME(ros_BatteryState),
+        .rihs_hash = ROSTYPE_HASH(ros_BatteryState)
     }
+};
+
+// Only the voltage is measured; unmeasured fields are NaN as sensor_msgs/BatteryState specifies.
+static ros_BatteryState msg_battery = {
+    .header = {.frame_id = (char *)"base_link"},
+    .voltage = NAN,
+    .temperature = NAN,
+    .current = NAN,
+    .charge = NAN,
+    .capacity = NAN,
+    .design_capacity = NAN,
+    .percentage = NAN,
+    .power_supply_status = 0,     // POWER_SUPPLY_STATUS_UNKNOWN
+    .power_supply_health = 0,     // POWER_SUPPLY_HEALTH_UNKNOWN
+    .power_supply_technology = 0, // POWER_SUPPLY_TECHNOLOGY_UNKNOWN
+    .present = true,
+    .cell_voltage = {.data = NULL, .n_elements = 0},
+    .cell_temperature = {.data = NULL, .n_elements = 0},
+    .location = (char *)"",
+    .serial_number = (char *)"",
 };
 
 static void IRAM_ATTR emergency_stop_button_isr(void *arg) {
@@ -101,13 +125,20 @@ static int read_pin_mv() {
 }
 
 static void battery_voltage_reader_task(void *arg) {
+    TickType_t last_wake_time = xTaskGetTickCount();
+
     while (true) {
         int pin_mv = read_pin_mv();
         if (pin_mv >= 0) {
-            ESP_LOGD(TAG, "Battery pin: %d mV", pin_mv);
+            z_clock_t now;
+            clock_gettime(CLOCK_REALTIME, &now);
+            PicoRosso::set_timestamp(msg_battery.header.stamp, now);
+            msg_battery.voltage = pin_mv / 1000.0f * battery_divider_ratio;
+            ESP_LOGD(TAG, "Battery: %d mV at pin, %.2f V", pin_mv, msg_battery.voltage);
+            pr_publish_buf(publisher_battery, msg_battery, publisher_buf, sizeof(publisher_buf));
         }
 
-        vTaskDelay(pdMS_TO_TICKS(BATTERY_READER_PERIOD_MS));
+        vTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(BATTERY_READER_PERIOD_MS));
     }
 }
 
@@ -171,21 +202,15 @@ static bool setup_gpio() {
 
     // No gpio_config() for the battery pin: the ADC driver sets it up, and an
     // internal pull resistor would load the voltage divider and skew readings.
-    if (!setup_adc()) {
-        return false;
-    }
-
-    xTaskCreate(battery_voltage_reader_task, BATTERY_READER_TASK_NAME, 8192, NULL, BATTERY_READER_TASK_PRIORITY,
-                NULL);
-
-    return true;
+    return setup_adc();
 }
 
 bool Infrastructure::setup(gpio_num_t emergency_stop_button,
                            EmergencyStopCallback on_emergency_stop,
                            gpio_num_t adc_battery_reader,
+                           float battery_divider_ratio,
                            const char *topic_emergency_stop,
-                           const char *topic_battery_voltage) {
+                           const char *topic_battery) {
 
     ESP_LOGD(TAG, "Setting up...");
 
@@ -195,6 +220,7 @@ bool Infrastructure::setup(gpio_num_t emergency_stop_button,
     emergency_stop_state_cb = on_emergency_stop;
 
     ::adc_battery_reader = adc_battery_reader;
+    ::battery_divider_ratio = battery_divider_ratio;
 
     if (!setup_gpio()) {
         ESP_LOGE(TAG, "Could not setup infrastructure module.");
@@ -205,6 +231,14 @@ bool Infrastructure::setup(gpio_num_t emergency_stop_button,
     ESP_LOGI(TAG, "Declaring publisher on [%s]", publisher_emergency_stop.topic.name);
     picoros_publisher_declare(&PicoRosso::node, &publisher_emergency_stop);
 
+    publisher_battery.topic.name = topic_battery;
+    ESP_LOGI(TAG, "Declaring publisher on [%s]", publisher_battery.topic.name);
+    picoros_publisher_declare(&PicoRosso::node, &publisher_battery);
+
+    // Started only once its publisher is declared
+    xTaskCreate(battery_voltage_reader_task, BATTERY_READER_TASK_NAME, 8192, NULL, BATTERY_READER_TASK_PRIORITY,
+                NULL);
+
     ESP_LOGD(TAG, "Setting up done.");
     return true;
 }
@@ -212,8 +246,4 @@ bool Infrastructure::setup(gpio_num_t emergency_stop_button,
 void Infrastructure::trigger_emergency_stop(bool stopped) {
     emergency_stop_state_cb(stopped);
     pr_publish(publisher_emergency_stop, stopped);
-}
-
-void Infrastructure::notify_battery_voltage(int32_t voltage) {
-    pr_publish(publisher_battery_voltage, voltage);
 }
