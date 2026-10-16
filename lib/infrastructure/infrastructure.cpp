@@ -132,7 +132,7 @@ static bool setup_gpio() {
     setup_adc();
 
     xTaskCreate(battery_voltage_reader_task, BATTERY_READER_TASK_NAME, 8192, NULL, BATTERY_READER_TASK_PRIORITY,
-                &emergency_stop_task_handle);
+                NULL);
 
     return true;
 }

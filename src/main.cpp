@@ -132,7 +132,6 @@ void app_main()
     ticker.setup("tick");
     env.setup(i2c0_bus_hdl);
     imu.setup(i2c0_bus_hdl);
-    Infrastructure::setup(EMERGENCY_STOP_BUTTON_PIN, on_emergency_stop);
     Infrastructure::setup(EMERGENCY_STOP_BUTTON_PIN, on_emergency_stop, BATTERY_VOLTAGE_READER_PIN);
     mobility.setup();
 
