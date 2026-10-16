@@ -13,7 +13,15 @@
 /** Time to let bounce settle before re-reading the level */
 #define DEBOUNCE_SETTLE_MS 20
 
-#define BATTERY_READER_PERIOD 1'000
+#define BATTERY_READER_PERIOD_MS 1000
+/** Raw samples averaged per battery reading */
+#define BATTERY_READER_SAMPLES 16
+
+#define ADC_MAX_RAW 4095
+/** Approximate full scale at 12 dB attenuation, used only if calibration is unavailable */
+#define ADC_UNCALIBRATED_FULL_SCALE_MV 3100
+/** Reference voltage used by line fitting when the chip has no Vref burned in eFuse */
+#define ADC_DEFAULT_VREF_MV 1100
 
 #define BATTERY_READER_TASK_NAME "battery_read_task"
 #define STOP_BUTTON_TASK_NAME "estop_button_task"
@@ -71,37 +79,75 @@ static void emergency_stop_button_task(void *arg) {
     }
 }
 
-static void battery_voltage_reader_task(void *arg) {
-    while(true){
+/** Averages several raw samples to smooth out ADC noise. @return pin voltage in mV, or -1 on error. */
+static int read_pin_mv() {
+    int raw_sum = 0;
+    for (int i = 0; i < BATTERY_READER_SAMPLES; i++) {
         int raw;
-        int result;
-        ESP_ERROR_CHECK(adc_oneshot_read(handle, channel, &raw));
-        ESP_LOGI("adc", "Raw ADC: %d", raw);
+        esp_err_t err = adc_oneshot_read(handle, channel, &raw);
+        if (err != ESP_OK) {
+            ESP_LOGE(TAG, "ADC read failed (%s)", esp_err_to_name(err));
+            return -1;
+        }
+        raw_sum += raw;
+    }
+    int raw = raw_sum / BATTERY_READER_SAMPLES;
 
-        ESP_ERROR_CHECK(adc_oneshot_get_calibrated_result(handle, adc_calibration_handle, channel, &result));
-        ESP_LOGI("adc", "Calibrated ADC (mV): %d", result);
+    int mv;
+    if (adc_calibration_handle == NULL || adc_cali_raw_to_voltage(adc_calibration_handle, raw, &mv) != ESP_OK) {
+        mv = raw * ADC_UNCALIBRATED_FULL_SCALE_MV / ADC_MAX_RAW; // rough estimate
+    }
+    return mv;
+}
 
-        vTaskDelay(pdMS_TO_TICKS(BATTERY_READER_PERIOD));
+static void battery_voltage_reader_task(void *arg) {
+    while (true) {
+        int pin_mv = read_pin_mv();
+        if (pin_mv >= 0) {
+            ESP_LOGD(TAG, "Battery pin: %d mV", pin_mv);
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(BATTERY_READER_PERIOD_MS));
     }
 }
 
-static void setup_adc() {
+static bool setup_adc() {
     adc_unit_t unit_id;
-    adc_oneshot_io_to_channel(adc_battery_reader, &unit_id, &channel);
+    esp_err_t err = adc_oneshot_io_to_channel(adc_battery_reader, &unit_id, &channel);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "GPIO %d is not an ADC pin", adc_battery_reader);
+        return false;
+    }
+    if (unit_id != ADC_UNIT_1) {
+        // ADC2 is shared with the WiFi driver and reads fail while it is active
+        ESP_LOGW(TAG, "GPIO %d is on ADC2, reads may fail while WiFi is on", adc_battery_reader);
+    }
 
-    adc_oneshot_unit_init_cfg_t config = {.unit_id=unit_id, .clk_src=ADC_RTC_CLK_SRC_DEFAULT, .ulp_mode=ADC_ULP_MODE_RISCV};
-    ESP_ERROR_CHECK(adc_oneshot_new_unit(&config, &handle));
+    adc_oneshot_unit_init_cfg_t unit_config = {.unit_id = unit_id, .ulp_mode = ADC_ULP_MODE_DISABLE};
+    err = adc_oneshot_new_unit(&unit_config, &handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Could not init ADC unit (%s)", esp_err_to_name(err));
+        return false;
+    }
 
-    adc_oneshot_chan_cfg_t chann_config = {
-        .atten = ADC_ATTEN_DB_12,
-        .bitwidth = ADC_BITWIDTH_DEFAULT
-    };
+    adc_oneshot_chan_cfg_t channel_config = {.atten = ADC_ATTEN_DB_12, .bitwidth = ADC_BITWIDTH_12};
+    err = adc_oneshot_config_channel(handle, channel, &channel_config);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Could not configure ADC channel (%s)", esp_err_to_name(err));
+        return false;
+    }
 
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(handle, channel, &chann_config));
+    adc_cali_line_fitting_config_t calibration_config = {.unit_id = unit_id,
+                                                         .atten = ADC_ATTEN_DB_12,
+                                                         .bitwidth = ADC_BITWIDTH_12,
+                                                         .default_vref = ADC_DEFAULT_VREF_MV};
+    err = adc_cali_create_scheme_line_fitting(&calibration_config, &adc_calibration_handle);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "ADC calibration unavailable (%s), readings will be approximate", esp_err_to_name(err));
+        adc_calibration_handle = NULL;
+    }
 
-    adc_cali_line_fitting_config_t calibration_config = { .unit_id = ADC_UNIT_1, .atten = ADC_ATTEN_DB_12, .bitwidth = ADC_BITWIDTH_DEFAULT, .default_vref = 0};
-    adc_cali_create_scheme_line_fitting(&calibration_config, &adc_calibration_handle);
-
+    return true;
 }
 
 static bool setup_gpio() {
@@ -123,13 +169,11 @@ static bool setup_gpio() {
     gpio_isr_handler_add(emergency_stop_button, emergency_stop_button_isr,
                          (void *)(intptr_t)emergency_stop_button);
 
-    gpio_config_t battery_voltage_reader_conf = {   .pin_bit_mask = (1ULL << adc_battery_reader),
-                                                    .mode = GPIO_MODE_INPUT,
-                                                    .pull_up_en = GPIO_PULLUP_DISABLE,
-                                                    .pull_down_en = GPIO_PULLDOWN_ENABLE,
-                                                    .intr_type = GPIO_INTR_DISABLE};
-    gpio_config(&battery_voltage_reader_conf);
-    setup_adc();
+    // No gpio_config() for the battery pin: the ADC driver sets it up, and an
+    // internal pull resistor would load the voltage divider and skew readings.
+    if (!setup_adc()) {
+        return false;
+    }
 
     xTaskCreate(battery_voltage_reader_task, BATTERY_READER_TASK_NAME, 8192, NULL, BATTERY_READER_TASK_PRIORITY,
                 NULL);
