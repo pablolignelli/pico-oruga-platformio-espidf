@@ -184,8 +184,8 @@ static bool setup_adc() {
 static bool setup_gpio() {
     gpio_config_t button_conf = {.pin_bit_mask = (1ULL << emergency_stop_button),
                                  .mode = GPIO_MODE_INPUT,
-                                 .pull_up_en = GPIO_PULLUP_ENABLE,
-                                 .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                                 .pull_up_en = GPIO_PULLUP_DISABLE,
+                                 .pull_down_en = GPIO_PULLDOWN_ENABLE,
                                  .intr_type = GPIO_INTR_ANYEDGE};
     gpio_config(&button_conf);
 
