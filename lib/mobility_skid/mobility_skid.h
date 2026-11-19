@@ -10,6 +10,7 @@ public:
 
   static void set_motor_enable(bool enable); // TODO
   static void stop();
+
 };
 
 #endif // __MOBILITY_SKID_H

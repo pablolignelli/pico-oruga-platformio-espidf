@@ -18,7 +18,7 @@ static const float WHEEL_DIAMETER = 0.202;  // wheel's diameter in meters
 #if defined(USE_FULL_QUADRATURE)
 static const float COUNTS_PER_REV = ENCODER_PPR * MOTOR_REDUCTION * 4; // quadrature counts per wheel rev - 2448
 static const float TICKS_TO_RAD = 2 * M_PI / COUNTS_PER_REV;
-#elif
+#else
 static const float PULSES_PER_REV = ENCODER_PPR * MOTOR_REDUCTION; // encoder ticks per wheel rev - 312
 static const float TICKS_TO_RAD = 2 * M_PI / PULSES_PER_REV;
 #endif
